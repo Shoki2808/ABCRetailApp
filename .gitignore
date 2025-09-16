@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/ABCRetailApp/Properties/ServiceDependencies/ABCRetail802 - Web Deploy
+/ABCRetailApp/appsettings.json
+/ABCRetailApp/appsettings.json

@@ -1,0 +1,225 @@
+﻿@*<RadzenStack AlignItems="AlignItems.Center"  Orientation="Radzen.Orientation.Vertical" Gap="2rem">
+    <RadzenColumn SizeMD=8 class="rz-m-0 rz-m-md-12" Style="width: 100%; max-width: 600px;">
+        <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Outlined" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Venue</RadzenAlert>
+        <RadzenTemplateForm TItem="Venue" Data="@(venueModel)" Visible="@(venueModel != null)" Submit="@FormSubmit">
+            <RadzenStack>
+                <RadzenFormField Text="Venue Name" Variant="Variant.Outlined">
+                    <ChildContent>
+                        <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(venueModel.VenueName)" Name="VenueName" />
+                    </ChildContent>
+                    <Helper>
+                        <RadzenRequiredValidator Component="VenueName" Text="VenueName is required" />
+                    </Helper>
+                </RadzenFormField>
+                <RadzenFormField Text="Location" Variant="Variant.Outlined">
+                    <ChildContent>
+                        <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(venueModel.Location)" Name="Location" />
+                    </ChildContent>
+                    <Helper>
+                        <RadzenRequiredValidator Component="Location" Text="Location is required" />
+                    </Helper>
+                </RadzenFormField>
+                <RadzenFormField Text="Capacity" Variant="Variant.Outlined">
+                    <ChildContent>
+                        <RadzenNumeric style="display: block; width: 100%" @bind-Value="@(venueModel.Capacity)" Name="Capacity" />
+                    </ChildContent>
+                    <Helper>
+                        <RadzenRequiredValidator Component="Capacity" Text="Capacity is required" />
+                    </Helper>
+                </RadzenFormField>
+
+                @*   <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
+                    <ChildContent>
+                        <RadzenDropDownDataGrid Data="@(EventTypeList)" TextProperty="EventTypeName" ValueProperty="EventTypeID" AllowClear=true
+                        style="display: block; width: 100%" @bind-Value="@(venueModel.EventTypeId)" Name="EventTypeID" />
+                    </ChildContent>
+                </RadzenFormField> *
+                <RadzenRow style="margin-bottom: 1rem">
+                    <RadzenColumn SizeMD="3">
+                        <RadzenLabel Text="Is Active" Component="IsActive" style="width: 100%" />
+                    </RadzenColumn>
+                    <RadzenColumn SizeMD="9">
+                        <RadzenCheckBox @bind-Value="@(venueModel.IsActive)" Name="IsActive" />
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow>
+                    <RadzenStack>
+                        <RadzenUpload ChooseText="Upload Image" 
+                        @ref="@upload"
+                        Multiple="false"
+                        Accept="image/*"
+                        Change="@OnChange" />
+                        @* <RadzenFileInput @bind-Value=@photo @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%"
+                        Change=@(args => OnChange(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+ *
+                    </RadzenStack>
+                    @             @if (!string.IsNullOrEmpty(imagePreview))
+                    {
+                        <img src="@imagePreview" style="max-width: 500px; max-height: 500px;" />
+                    } @
+        @*         </RadzenRow>
+                <RadzenFormField Text="Image Url" Variant="Variant.Outlined">
+                    <ChildContent>
+                        <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(venueModel.ImageUrl)" Name="ImageUrl" />
+                    </ChildContent>
+                </RadzenFormField>
+            </RadzenStack>
+
+            <RadzenStack style="margin-top:1rem;" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Save Venue" Variant="Variant.Outlined" />
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick" />
+            </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenColumn>
+</RadzenStack> *@
+
+
+@* @code {
+
+    bool showSpinnerModal = false;
+    RadzenUpload upload;
+    private Venue? venueModel = new();
+    private List<EventType> EventTypeList = new List<EventType>();
+    string imagePreview;
+    IBrowserFile selectedFile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetVEventTypes();
+
+        //eventTypesForEventTypeID = await EventEaseService.GetEventTypes();
+    }
+    protected bool errorVisible;
+
+    // protected IEnumerable<EventEaseBooking.Models.EventEase.EventType> eventTypesForEventTypeID;
+
+    private async Task GetVEventTypes()
+    {
+        try
+        {
+            EventTypeList = await eventService.GetEventTypes();
+        }
+        catch (Exception e)
+        {
+            var ex = e.InnerException;
+            throw;
+        }
+
+    }
+
+    byte[] photo;
+
+    string fileName;
+    long? fileSize;
+
+  
+
+    private async Task OnChange(UploadChangeEventArgs args)
+    {
+        // Get the first file
+        var file = args.Files.FirstOrDefault();
+        if (file != null)
+        {
+            try
+            {
+                
+                selectedFile = args.Files.FirstOrDefault();
+
+            }
+            catch (Exception ex)
+            {
+                // Handle errors (e.g., file too large)
+                NotificationService.Notify();
+            }
+        }
+    }
+
+    void OnError(UploadErrorEventArgs args, string name)
+    {
+
+    }
+    protected async Task FormSubmit()
+    {
+        showSpinnerModal = true;
+
+        try
+        {
+
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(selectedFile.Name)}";
+
+            // Upload to Azure Blob Storage
+            var stream = selectedFile.OpenReadStream();
+            venueModel.ImageUrl = await BlobStorageService.UploadFileAsync(
+                stream,
+                fileName);
+
+            // ,
+            // selectedFile.ContentType
+
+            // venueModel.EventTypeId = 5;
+
+            var result = await venueService.AddVenue(venueModel);
+            if (result.VenueId > 0)
+            {
+                // Show success
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Venue saved successfully",
+                    Duration = 4000
+                });
+                NavigationManager.NavigateTo("/Venues");
+            }
+            else
+            {
+                ShowError();
+            }
+            DialogService.Close(venueModel);
+        }
+        catch (Exception ex)
+        {
+            // errorVisible = true;
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to save venue: {ex.Message}",
+                Duration = 4000
+            });
+
+        }
+        showSpinnerModal = true;
+
+    }
+
+    protected async Task CancelButtonClick(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+
+    private void ShowSuccess()
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Success!",
+            Detail = "Venue created successfully",
+            Duration = 4000 // milliseconds
+        });
+    }
+
+    private void ShowError()
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Error!",
+            Detail = "Something went wrong. Couldn't add Venue",
+            Duration = 4000
+        });
+    }
+
+
+} *@

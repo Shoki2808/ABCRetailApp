@@ -1,0 +1,69 @@
+@page "/orders"
+@inject IOrderService OrderService
+@using ABCRetailApp.Models
+
+<h2>Orders</h2>
+
+<button @onclick="NewOrder">New Order</button>
+
+@if (editing != null)
+{
+    <OrderForm Order="editing" Saved="OnSaved" />
+}
+
+@if (orders is null)
+{
+    <p>Loading...</p>
+}
+else if (orders.Count == 0)
+{
+    <p>No orders yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr><th>Id</th><th>Customer</th><th>Date</th><th>Total</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var o in orders)
+        {
+            <tr>
+                <td>@o.Id</td>
+                <td>@o.CustomerName (@o.CustomerId)</td>
+                <td>@o.CreatedUtc.ToLocalTime()</td>
+                <td>@o.Total.ToString("C")</td>
+                <td>
+                    <a href="/order/@o.CustomerId/@o.Id">Open</a>
+                    <button @onclick="(() => Delete(o))">Delete</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Order>? orders;
+    private Order? editing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = (await OrderService.GetRecentAsync()).ToList();
+    }
+
+    void NewOrder() => editing = new Order();
+
+    async Task OnSaved(Order o)
+    {
+        editing = null;
+        orders = (await OrderService.GetRecentAsync()).ToList();
+        StateHasChanged();
+    }
+
+    async Task Delete(Order o)
+    {
+        await OrderService.DeleteAsync(o.Id, o.CustomerId);
+        orders = (await OrderService.GetRecentAsync()).ToList();
+    }
+}

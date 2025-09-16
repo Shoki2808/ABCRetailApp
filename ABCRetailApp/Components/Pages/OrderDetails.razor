@@ -1,0 +1,44 @@
+@page "/order/{CustomerId}/{Id}"
+@inject IOrderService OrderService
+
+
+<h2>Order @Id</h2>
+
+@if (order is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <p><strong>Customer:</strong> @order.CustomerName (@order.CustomerId)</p>
+    <p><strong>Created:</strong> @order.CreatedUtc.ToLocalTime()</p>
+
+    <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+        <tbody>
+        @foreach (var i in order.Items)
+        {
+            <tr>
+                <td>@i.Name</td>
+                <td>@i.Quantity</td>
+                <td>@i.UnitPrice.ToString("C")</td>
+                <td>@i.LineTotal.ToString("C")</td>
+            </tr>
+        }
+        </tbody>
+        <tfoot>
+            <tr><td colspan="3" style="text-align:right"><strong>Grand Total</strong></td><td><strong>@order.Total.ToString("C")</strong></td></tr>
+        </tfoot>
+    </table>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+    [Parameter] public string CustomerId { get; set; } = string.Empty;
+    private Order? order;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        order = await OrderService.GetAsync(Id, CustomerId);
+    }
+}

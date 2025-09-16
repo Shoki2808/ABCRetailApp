@@ -1,0 +1,42 @@
+@page "/"
+
+<h2>Welcome</h2>
+<p>This is a ordering system for ABC Retail</p>
+
+<div class="cards">
+    <a class="card" href="/orders">
+        <h3>Manage Orders</h3>
+        <p>Create, view and update customer orders.</p>
+    </a>
+    <a class="card" @onclick="()=>NavToAddProducts()">
+        <h3>Manage Products</h3>
+        <p>Upload product images to Azure Blob Storage.</p>
+    </a>
+</div>
+
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+      //  showSpinnerModal = true;
+        try
+        {
+            //venues = await bookingService.GetVenues();
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+
+        await base.OnInitializedAsync();
+        //showSpinnerModal = false;
+    }
+    public void NavToAddProducts()
+    {
+
+        NavigationManager.NavigateTo("/products");
+    }
+
+}

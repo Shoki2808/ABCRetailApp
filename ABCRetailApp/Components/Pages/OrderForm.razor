@@ -1,0 +1,60 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using ABCRetailApp.Services
+@inject IOrderService OrderService
+
+<EditForm Model="@Order" OnValidSubmit="OnSaveAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-grid">
+        <label>Customer ID</label>
+        <InputText @bind-Value="Order.CustomerId" />
+
+        <label>Customer Name</label>
+        <InputText @bind-Value="Order.CustomerName" />
+
+        <label>Notes</label>
+        <InputTextArea @bind-Value="Order.Notes" />
+
+        <div class="line"></div>
+
+        <h4>Items</h4>
+        @foreach (var item in Order.Items)
+        {
+            <div class="item-row">
+                <InputText @bind-Value="item.Name" placeholder="Item name" />
+                <InputNumber @bind-Value="item.UnitPrice" />
+                <InputNumber @bind-Value="item.Quantity" />
+                <button type="button" @onclick="(() => RemoveItem(item))">Remove</button>
+            </div>
+        }
+        <button type="button" @onclick="AddItem">+ Add item</button>
+
+        <div class="total">
+            <strong>Total:</strong> @Order.Total.ToString("C")
+        </div>
+
+        <button type="submit">Save</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public Order Order { get; set; } = new();
+    [Parameter] public EventCallback<Order> Saved { get; set; }
+
+    private void AddItem() => Order.Items.Add(new OrderItem { Quantity = 1 });
+    private void RemoveItem(OrderItem item) => Order.Items.Remove(item);
+
+    private async Task OnSaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Order.Id))
+        {
+            await OrderService.CreateAsync(Order);
+        }
+        else
+        {
+            await OrderService.UpdateAsync(Order);
+        }
+        if (Saved.HasDelegate) await Saved.InvokeAsync(Order);
+    }
+}

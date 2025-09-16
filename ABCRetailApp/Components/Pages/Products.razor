@@ -1,0 +1,160 @@
+@page "/products"
+@inject IBlobStorageService Blobs
+@inject IProductService ProductService
+
+
+
+<RadzenCard Style="margin-bottom: 20px;">
+    <div class="page-header">
+        <h1>Products On Sale</h1>
+        <p>Discover our amazing collection of products at great prices</p>
+    </div>
+</RadzenCard>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="20px">
+    @if (products == null)
+    {
+        <RadzenStack JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Style="height: 200px;">
+            <RadzenProgressBarCircular />
+            <span style="margin-top: 10px;">Loading products...</span>
+        </RadzenStack>
+    }
+    else if (!products.Any())
+    {
+        <RadzenAlert Style="margin: 20px 0;">
+            <RadzenIcon class="ri-information-line" style="margin-right: 8px;"></RadzenIcon>
+            No products found.
+        </RadzenAlert>
+    }
+    else
+    {
+        <div class="products-grid">
+            @foreach (var product in products)
+            {
+                <RadzenCard class="product-card" @onclick="@(() => ViewProductDetails(product))">
+                    <div class="product-image-container">
+                        <img src="@product.ImageUrl" 
+                             alt="@product.Name" 
+                             class="product-image"
+                             loading="lazy"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='" />
+                        
+                      @*   @if (product.)
+                        {
+                            <div class="sale-badge">SALE</div>
+                        } *@
+                    </div>
+                    
+                    <div class="product-info">
+                        <h3 class="product-name">@product.Name</h3>
+                        <p class="product-description">@product.Description</p>
+                        
+                        <div class="product-price">
+                         @*    @if (product.IsOnSale && product.OriginalPrice.HasValue)
+                            {
+                                <span class="original-price">$@product.OriginalPrice.Value.ToString("N2")</span>
+                            } *@
+                            <span class="current-price">R @product.Price</span>
+                        </div>
+                        
+                        <div class="product-category">
+                            <RadzenBadge Variant="Variant.Outlined">@product.ProductCategory</RadzenBadge>
+                        </div>
+                    </div>
+                </RadzenCard>
+            }
+        </div>
+    }
+</RadzenStack>
+
+@if (selectedProduct != null)
+{
+    <RadzenDialog @bind-Visible="showProductDialog" Style="max-width: 600px;">
+        
+            <h2>@selectedProduct.Name</h2>
+
+            <div class="product-dialog-content">
+                <img src="@selectedProduct.ImageUrl" 
+                     alt="@selectedProduct.Name" 
+                     class="dialog-image" />
+                
+                <div class="dialog-info">
+                    <p class="dialog-description">@selectedProduct.Description</p>
+                    
+                    <div class="dialog-price">
+               
+                        <div class="price-row">
+                            <span class="label">Price:</span>
+                            <span class="current-price">$@selectedProduct.Price.ToString("N2")</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dialog-meta">
+                        <span>Category: </span>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary">@selectedProduct.ProductCategory</RadzenBadge>
+                    </div>
+                </div>
+            </div>
+
+        <RadzenFooter>
+            <RadzenButton Text="Close" Click="@(() => showProductDialog = false)" ButtonStyle="ButtonStyle.Secondary" />
+            <RadzenButton Text="Add to Cart" Click="@(() => AddToCart(selectedProduct))" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenFooter>
+    </RadzenDialog>
+}
+<InputFile OnChange="OnUpload" />
+
+@if (!string.IsNullOrWhiteSpace(imageUrl))
+{
+    <p>Uploaded URL:</p>
+    <a href="@imageUrl" target="_blank">@imageUrl</a>
+    <div>
+        <img src="@imageUrl" style="max-width:300px" />
+    </div>
+}
+
+@code {
+    private string? imageUrl;
+
+    private List<Product> products = new();
+    private Product selectedProduct;
+    private bool showProductDialog;
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            products = await ProductService.GetRecentAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - you might want to show an error message
+            Console.WriteLine($"Error loading products: {ex.Message}");
+        }
+    }
+
+    private void ViewProductDetails(Product product)
+    {
+        selectedProduct = product;
+        showProductDialog = true;
+    }
+
+    private void AddToCart(Product product)
+    {
+        // Implement your cart logic here
+        Console.WriteLine($"Added {product.Name} to cart");
+
+        // Optional: Show success message
+        // You can use Radzen notification here
+    }
+    private async Task OnUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var name = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+        imageUrl = await Blobs.UploadAsync(file, name, file.ContentType);
+    }
+}

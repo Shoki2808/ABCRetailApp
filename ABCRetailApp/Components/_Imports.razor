@@ -8,3 +8,18 @@
 @using Microsoft.JSInterop
 @using ABCRetailApp
 @using ABCRetailApp.Components
+@using ABCRetailApp.Data;
+@using ABCRetailApp.Models;
+@using ABCRetailApp.Services;
+@using Radzen
+@using Radzen.Blazor
+@using System.Text.Json
+@using System.ComponentModel.DataAnnotations
+
+
+
+@inject NotificationService NotificationService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@* @inject TooltipService TooltipService *@
